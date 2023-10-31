@@ -126,7 +126,28 @@ void Setup4thAssignmentsEndpoints()
         worker.Forget(userId);
         return Results.Ok();
     });
+
+    app.MapGet("/api/stats/user/reports", () =>
+    {
+        var dailyAverages = new Dictionary<Guid, double>();
+        var weeklyAverages = new Dictionary<Guid, double>();
+        foreach (var userId in worker.Users.Keys)
+        {
+            if (worker.Users.TryGetValue(userId, out var user))
+            {
+                var dailyAverage = detector.CalculateDailyAverageForUser(user);
+                dailyAverages.Add(userId, dailyAverage);
+
+                var weeklyAverage = detector.CalculateWeeklyAverageForUser(user);
+                weeklyAverages.Add(userId, weeklyAverage);
+            }
+        }
+
+        var averageWeeklyAverage = detector.CalculateAverageWeeklyAverageForAllUsers(worker.Users);
+
+        return Results.Json(new { DailyAverages = dailyAverages, WeeklyAverages = weeklyAverages, AverageWeeklyAverage = averageWeeklyAverage });
+    });
+
+
+
 }
-
-
-// ssh -i deploy_key root@lastseendemo.top
